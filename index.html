@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS S3 Static Website Demo</title>
+    <style>
+        :root {
+            --primary: #FF9900;       /* AWS Orange */
+            --primary-dark: #E88B00;
+            --secondary: #232F3E;     /* AWS Squid Ink */
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --accent: #38bdf8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: rgba(35, 47, 62, 0.85);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .badge-aws {
+            background-color: var(--primary);
+            color: #111;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #10b98122;
+            color: #34d399;
+            border: 1px solid #05966955;
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #34d399;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #34d399;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.9); }
+        }
+
+        main {
+            flex: 1;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+            width: 100%;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 3.5rem;
+        }
+
+        .hero h1 {
+            font-size: 2.75rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ffffff 40%, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            max-width: 650px;
+            margin: 0 auto 2rem auto;
+            line-height: 1.6;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.75rem;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .info-box {
+            background: linear-gradient(180deg, rgba(35, 47, 62, 0.6) 0%, rgba(30, 41, 59, 0.4) 100%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .info-box h2 {
+            font-size: 1.35rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-box ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .info-box li {
+            background: #0f172a80;
+            border: 1px solid #33415560;
+            border-radius: 8px;
+            padding: 0.85rem 1rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .info-box strong {
+            color: var(--text-main);
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+
+        footer {
+            border-top: 1px solid var(--border);
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        footer span {
+            color: var(--primary);
+        }
+
+        @media (max-width: 640px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            header {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <span class="badge-aws">AWS S3</span>
+            <span>Cloud Website</span>
+        </div>
+        <div class="status-pill">
+            <span class="status-dot"></span>
+            <span>Online / Hosted</span>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <h1>Static Website Berhasil Dideploy!</h1>
+            <p>Halaman ini di-host secara langsung menggunakan layanan Amazon Simple Storage Service (Amazon S3) Static Website Hosting.</p>
+        </section>
+
+        <section class="card-grid">
+            <div class="card">
+                <div class="card-icon">⚡</div>
+                <h3>Kinerja Cepat</h3>
+                <p>Website statis menyajikan file HTML, CSS, dan JS secara instan tanpa membutuhkan server backend atau database.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">💰</div>
+                <h3>Hemat Biaya</h3>
+                <p>Hanya bayar untuk penyimpanan data dan bandwidth keluar yang digunakan, cocok untuk praktikum dan portofolio.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🛡️</div>
+                <h3>Tinggi Ketersediaan</h3>
+                <p>Didukung oleh infrastruktur AWS dengan tingkat ketahanan data hingga 99.999999999% (11 nines).</p>
+            </div>
+        </section>
+
+        <section class="info-box">
+            <h2>📋 Detail Konfigurasi Praktikum</h2>
+            <ul>
+                <li>
+                    <strong>Index Document</strong>
+                    <code>index.html</code>
+                </li>
+                <li>
+                    <strong>Error Document</strong>
+                    <code>error.html</code>
+                </li>
+                <li>
+                    <strong>Storage Class</strong>
+                    S3 Standard
+                </li>
+                <li>
+                    <strong>Tipe Hosting</strong>
+                    S3 Static Website Hosting
+                </li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <p>Praktikum Cloud Computing &bull; Hosted with <span>Amazon Web Services (AWS)</span></p>
+    </footer>
+
+</body>
+</html>
+
